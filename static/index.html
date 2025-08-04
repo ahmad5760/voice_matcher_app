@@ -1,0 +1,75 @@
+<!-- static/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Service Check system</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Voice Service Check System</h1>
+
+        <div class="services-container">
+            <div class="service-item">
+                <div class="service-check" id="service-check-0"></div>
+                <span>Service 1</span>
+            </div>
+            <div class="service-item">
+                <div class="service-check" id="service-check-1"></div>
+                <span>Service 2</span>
+            </div>
+            <div class="service-item">
+                <div class="service-check" id="service-check-2"></div>
+                <span>Service 3</span>
+            </div>
+            <div class="service-item">
+                <div class="service-check" id="service-check-3"></div>
+                <span>Service 4</span>
+            </div>
+            <div class="service-item">
+                <div class="service-check" id="service-check-4"></div>
+                <span>Service 5</span>
+            </div>
+            <div class="service-item">
+                <div class="service-check" id="service-check-5"></div>
+                <span>Service 6</span>
+            </div>
+            <div class="service-item">
+                <div class="service-check" id="service-check-6"></div>
+                <span>Service 7</span>
+            </div>
+            <div class="service-item">
+                <div class="service-check" id="service-check-7"></div>
+                <span>Service 8</span>
+            </div>
+            <div class="service-item">
+                <div class="service-check" id="service-check-8"></div>
+                <span>Service 9</span>
+            </div>
+            <div class="service-item">
+                <div class="service-check" id="service-check-9"></div>
+                <span>Service 10</span>
+            </div>
+        </div>
+        
+        <div id="game-area">
+            <div class="status-box">
+                <p><strong>Status:</strong> <span id="status-text">Ready to Start</span></p>
+            </div>
+            <div class="message-box ai-message-box">
+                <p><strong>System Said:</strong></p>
+                <p id="ai-message">Click "Start Game" to begin.</p>
+            </div>
+            <div class="message-box user-message-box">
+                <p><strong>You Said:</strong></p>
+                <p id="user-transcription">...</p>
+            </div>
+        </div>
+        
+        <button id="start-btn">Start Game</button>
+    </div>
+    <script src="/static/script.js"></script>
+</body>
+</html>
