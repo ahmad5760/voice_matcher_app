@@ -5,48 +5,97 @@ const startBtn = document.getElementById('start-btn');
 const statusText = document.getElementById('status-text');
 const aiMessageText = document.getElementById('ai-message');
 const userTranscriptionText = document.getElementById('user-transcription');
-const serviceChecks = document.querySelectorAll('.service-check');
+const servicesContainer = document.getElementById('services-container');
+const instructionDisplayContainer = document.getElementById('instruction-display');
+const instructionText = document.getElementById('instruction-text');
 
-const TOTAL_INSTRUCTIONS = 10;
+let serviceChecks; // Will be populated after fetching instructions
+let instructionsList = [];
 let servicesStatus = [];
 let currentServiceIndex = 0;
-// isListening is our "master switch". It means "should the app be trying to listen right now?"
-let isListening = false; 
+let isListening = false;
 
 // --- 2. Web Speech API Setup ---
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition;
 if (!SpeechRecognition) {
     alert("Sorry, your browser doesn't support automatic voice detection. Try Chrome or Edge.");
+} else {
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
 }
-const recognition = new SpeechRecognition();
-recognition.continuous = false;
-recognition.lang = 'en-US';
-recognition.interimResults = false;
 
-// --- 3. Game Logic ---
+// --- 3. App Initialization ---
+async function initializeApp() {
+    if (!recognition) {
+        statusText.textContent = 'Error: Voice Recognition not supported.';
+        return;
+    }
+    try {
+        const response = await fetch('/get-instructions');
+        if (!response.ok) throw new Error('Could not fetch instructions');
+        const data = await response.json();
+        instructionsList = data.instructions;
+        
+        // Dynamically create service check UI
+        servicesContainer.innerHTML = ''; // Clear any existing
+        instructionsList.forEach((_, index) => {
+            const serviceNum = index + 1;
+            const serviceItem = document.createElement('div');
+            serviceItem.className = 'service-item';
+            serviceItem.innerHTML = `
+                <div class="service-check" id="service-check-${index}"></div>
+                <span>Service ${serviceNum}</span>
+            `;
+            servicesContainer.appendChild(serviceItem);
+        });
+        serviceChecks = document.querySelectorAll('.service-check');
+
+        // App is ready
+        statusText.textContent = 'Ready to Start';
+        aiMessageText.textContent = 'Click "Start Game" to begin.';
+        startBtn.disabled = false;
+        startBtn.textContent = 'Start Game';
+
+    } catch (error) {
+        console.error('Initialization failed:', error);
+        statusText.textContent = 'Error: Could not load game data.';
+        aiMessageText.textContent = 'Failed to connect to the server. Please refresh the page.';
+        startBtn.disabled = true;
+    }
+}
+
+
+// --- 4. Game Logic ---
 function startGame() {
     startBtn.disabled = true;
     startBtn.textContent = 'Game in Progress...';
-    servicesStatus = Array(TOTAL_INSTRUCTIONS).fill('pending');
+    servicesStatus = Array(instructionsList.length).fill('pending');
     currentServiceIndex = 0;
     updateCheckboxesUI();
     promptForInstruction(currentServiceIndex);
 }
 
 function promptForInstruction(index) {
-    if (index >= TOTAL_INSTRUCTIONS) {
+    if (index >= instructionsList.length) {
         endGame();
         return;
     }
     const serviceNum = index + 1;
     aiMessageText.textContent = `Please state the instruction for Service ${serviceNum}.`;
     userTranscriptionText.textContent = '...';
-    // Start the listening process
+
+    // Display the target instruction phrase
+    instructionText.textContent = `"${instructionsList[index]}"`;
+    instructionDisplayContainer.style.display = 'block';
+    
     listenForResponse();
 }
 
 function listenForResponse() {
-    if (isListening) return; // Don't start if already in a listening state
+    if (isListening || !recognition) return;
     isListening = true;
     statusText.textContent = 'Listening...';
     statusText.classList.add('listening');
@@ -57,55 +106,41 @@ function listenForResponse() {
     }
 }
 
-// Gracefully stop the listening loop
 function stopListening() {
+    if (!recognition) return;
     isListening = false;
     recognition.stop();
 }
 
-// --- 4. Speech Recognition Event Handlers ---
-
+// --- 5. Speech Recognition Event Handlers ---
 recognition.onresult = (event) => {
-    // A valid result was received. We can stop the loop.
     isListening = false; 
-    
     const transcript = event.results[0][0].transcript;
     userTranscriptionText.textContent = transcript;
-    
-    // We stop recognition explicitly here, which will then trigger the 'onend' event.
-    // The loop will NOT restart because isListening is now false.
     recognition.stop(); 
-    
     checkGuessWithAI(transcript, currentServiceIndex);
 };
 
 recognition.onerror = (event) => {
-    // Don't set isListening = false here. Let the onend handler manage the state.
     if (event.error !== 'no-speech') {
         console.error('Speech recognition error:', event.error);
         statusText.textContent = `Error: ${event.error}.`;
     }
 };
 
-// **** THIS IS THE KEY FIX ****
-// This event fires whenever recognition stops for ANY reason (result, error, or timeout).
 recognition.onend = () => {
     statusText.classList.remove('listening');
-    
-    // Check our master switch. If we are still supposed to be listening,
-    // it means the service stopped without a valid result (e.g., timeout).
-    // So, we immediately restart it.
     if (isListening) {
         console.log("Recognition service ended, restarting for next attempt...");
         try {
-            recognition.start(); // The loop continues
+            recognition.start();
         } catch(e) {
             console.error("Error restarting recognition:", e);
         }
     }
 };
 
-// --- 5. Backend Communication and Game State ---
+// --- 6. Backend Communication and Game State ---
 async function checkGuessWithAI(transcript, index) {
     statusText.textContent = 'AI is checking...';
     const serviceNum = index + 1;
@@ -134,7 +169,7 @@ async function checkGuessWithAI(transcript, index) {
         
         updateCheckboxesUI();
         
-        if (currentServiceIndex >= TOTAL_INSTRUCTIONS) {
+        if (currentServiceIndex >= instructionsList.length) {
             endGame();
         } else {
             setTimeout(() => promptForInstruction(currentServiceIndex), 2000);
@@ -156,15 +191,21 @@ function updateCheckboxesUI() {
 }
 
 function endGame() {
-    stopListening(); // Ensure the listening loop is fully stopped
+    stopListening();
+    instructionDisplayContainer.style.display = 'none';
+
     const allPassed = servicesStatus.every(s => s === 'passed');
-    if (allPassed) aiMessageText.textContent = '🎉 Congratulations! All services passed.';
-    else aiMessageText.textContent = 'Game Over! You can start a new game.';
+    if (allPassed) {
+        aiMessageText.textContent = '🎉 Congratulations! All services passed.';
+    } else {
+        aiMessageText.textContent = 'Game Over! You can start a new game.';
+    }
     
     statusText.textContent = 'Game Ended.';
     startBtn.disabled = false;
     startBtn.textContent = 'Start New Game';
 }
 
-// --- 6. Event Listener ---
+// --- 7. Event Listeners ---
+document.addEventListener('DOMContentLoaded', initializeApp);
 startBtn.addEventListener('click', startGame);

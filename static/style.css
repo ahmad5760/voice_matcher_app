@@ -27,10 +27,10 @@ h1 {
     margin-bottom: 25px;
 }
 
-/* NEW: Checkbox Grid Styles */
+/* Checkbox Grid Styles */
 .services-container {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
     gap: 15px;
     margin-bottom: 30px;
 }
@@ -99,6 +99,36 @@ h1 {
 .ai-message-box { background-color: #dbeafe; border: 1px solid #93c5fd; }
 .user-message-box { background-color: #e0f2fe; border: 1px solid #7dd3fc; }
 #ai-message, #user-transcription { font-style: italic; font-size: 1.1em; }
+
+
+/* NEW: Instruction Display Styles */
+.instruction-container {
+    margin-top: 15px;
+    padding: 15px;
+    background-color: #f0f9ff;
+    border-left: 5px solid #3b82f6;
+    border-radius: 0 8px 8px 0;
+}
+
+.instruction-container p {
+    margin: 0;
+    padding: 0;
+}
+
+.instruction-container p:first-child { /* The "Say this phrase:" part */
+    font-size: 0.9em;
+    font-weight: bold;
+    color: #555;
+    margin-bottom: 5px;
+}
+
+.instruction-text-content {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1.3em;
+    font-weight: bold;
+    color: #1e3a8a;
+}
+
 
 button#start-btn {
     background-color: #1d4ed8;

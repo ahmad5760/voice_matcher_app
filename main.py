@@ -55,6 +55,12 @@ def normalize_text(text: str) -> str:
 async def read_root():
     return FileResponse('static/index.html')
 
+# NEW ENDPOINT TO PROVIDE INSTRUCTIONS TO THE FRONTEND
+@app.get("/get-instructions")
+async def get_instructions():
+    return JSONResponse(content={"instructions": instructions})
+
+
 # NEW, SIMPLIFIED ENDPOINT FOR TEXT-BASED GUESSES
 @app.post("/check-text-guess")
 async def check_text_guess(guess_request: GuessRequest):
@@ -93,7 +99,7 @@ async def check_text_guess(guess_request: GuessRequest):
             "   - Missing or substituted key words\n"
             "   - Rearranged word order\n"
             "   - Synonyms or paraphrased content\n"
-            "   Examples:\n"
+            "   - Examples:\n"
             "   - 'stay low' ≠ 'get low'\n"
             "   - 'stay low and follow me' ≠ 'follow me and stay low'\n"
             "5. Respond ONLY with one JSON object: {\"match\": true} or {\"match\": false}. Do not include any explanation."
